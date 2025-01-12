@@ -6,38 +6,23 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-// 错误码定义
-typedef enum {
-    PDF_SUCCESS = 0,
-    PDF_ERROR_INVALID_PARAMS = -1,
-    PDF_ERROR_LOAD_FAILED = -2,
-    PDF_ERROR_NO_TEXT_FOUND = -3,
-    PDF_ERROR_MEMORY_ERROR = -4,
-    PDF_ERROR_SAVE_FAILED = -5
-} PdfError;
-
-// 错误信息结构体
-typedef struct {
-    PdfError error_code;
-    char error_message[256];
-} PdfErrorInfo;
+#include "../include/pdf_handler.h"
 
 // 全局错误信息
-static PdfErrorInfo g_last_error = {PDF_SUCCESS, ""};
+static pdf_error_t g_last_error = {PDF_SUCCESS, ""};
 
 // 用于文件写入的全局变量
 static FILE* g_output_file = NULL;
 
 // 设置错误信息
-static void set_error(PdfError code, const char* message) {
-    g_last_error.error_code = code;
+static void set_error(pdf_error_code_t code, const char* message) {
+    g_last_error.code = code;
     strncpy(g_last_error.error_message, message, sizeof(g_last_error.error_message) - 1);
     g_last_error.error_message[sizeof(g_last_error.error_message) - 1] = '\0';
 }
 
 // 获取最后的错误信息
-PdfErrorInfo get_last_error(void) {
+pdf_error_t get_last_error(void) {
     return g_last_error;
 }
 
