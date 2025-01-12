@@ -1,0 +1,43 @@
+# 忽略编译生成的目录
+/obj/
+/bin/
+
+# 忽略所有的目标文件和库文件
+*.o
+*.a
+*.so
+*.dylib
+
+# 忽略可执行文件
+pdf_handler
+run_tests
+
+# IDE 和编辑器文件
+.vscode/
+.idea/
+*.swp
+*~
+
+# macOS 系统文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 依赖和构建文件
+/build/
+/lib/
+/deps/
+
+# 测试生成的临时文件
+*.tmp
+/tests/*.pdf
+/tests/output/
+
+# 调试文件
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# 日志文件
+*.log
