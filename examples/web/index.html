@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Replacer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PDF Text Replacer</h1>
+        
+        <div class="upload-section">
+            <label for="pdfFile" class="file-label">
+                Choose PDF File
+                <input type="file" id="pdfFile" accept=".pdf" />
+            </label>
+            <div id="fileName" class="file-name"></div>
+        </div>
+
+        <div class="replacement-section">
+            <div class="input-group">
+                <label for="searchText">Text to Search:</label>
+                <input type="text" id="searchText" placeholder="Enter text to replace" value="T740">
+            </div>
+            
+            <div class="input-group">
+                <label for="replaceText">Replacement Text:</label>
+                <input type="text" id="replaceText" placeholder="Enter replacement text" value="A100300">
+            </div>
+        </div>
+
+        <button id="processButton" class="process-btn" disabled>Process PDF</button>
+
+        <div id="status" class="status"></div>
+        
+        <div id="result" class="result-section">
+            <a id="downloadLink" class="download-btn" style="display: none;">
+                Download Processed PDF
+            </a>
+        </div>
+    </div>
+
+    <script src="../../wasm/pdf_handler.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

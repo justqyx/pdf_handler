@@ -32,9 +32,3 @@ $(WASM_DIR):
 
 clean-wasm:
 	rm -rf $(WASM_DIR)
-
-# 构建 PDFium WebAssembly
-.PHONY: build-pdfium
-build-pdfium:
-	chmod +x build_pdfium_wasm.sh
-	./build_pdfium_wasm.sh

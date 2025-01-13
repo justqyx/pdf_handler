@@ -6,24 +6,46 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <emscripten.h>
 #include "../include/pdf_handler.h"
 
 // 全局错误信息
-static pdf_error_t g_last_error = {PDF_SUCCESS, ""};
+static pdf_error_code_t g_last_error_code = PDF_SUCCESS;
+static char g_last_error_message[256] = "";
 
 // 用于文件写入的全局变量
 static FILE* g_output_file = NULL;
 
-// 设置错误信息
-static void set_error(pdf_error_code_t code, const char* message) {
-    g_last_error.code = code;
-    strncpy(g_last_error.error_message, message, sizeof(g_last_error.error_message) - 1);
-    g_last_error.error_message[sizeof(g_last_error.error_message) - 1] = '\0';
+// 调试日志函数
+static void debug_log(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    char buffer[1024];
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    emscripten_log(EM_LOG_CONSOLE, "%s", buffer);
 }
 
-// 获取最后的错误信息
-pdf_error_t get_last_error(void) {
-    return g_last_error;
+// 设置错误信息
+static void set_error(pdf_error_code_t code, const char* message) {
+    g_last_error_code = code;
+    if (message) {
+        strncpy(g_last_error_message, message, sizeof(g_last_error_message) - 1);
+        g_last_error_message[sizeof(g_last_error_message) - 1] = '\0';
+        debug_log("Error: %s (code: %d)", message, code);
+    } else {
+        g_last_error_message[0] = '\0';
+    }
+}
+
+// 获取最后的错误代码
+pdf_error_code_t get_last_error(void) {
+    return g_last_error_code;
+}
+
+// 获取最后的错误消息
+const char* get_last_error_message(void) {
+    return g_last_error_message[0] ? g_last_error_message : NULL;
 }
 
 // 自定义写入函数
@@ -119,15 +141,45 @@ unsigned char* replace_text_in_pdf_stream(
     const char* replacement_text,
     size_t* modified_pdf_size
 ) {
-    if (pdf_binary_stream == NULL || pdf_stream_size == 0 || target_text == NULL || 
-        replacement_text == NULL || modified_pdf_size == NULL) {
-        set_error(PDF_ERROR_INVALID_PARAMS, "Invalid input parameters");
+    debug_log("Starting replace_text_in_pdf_stream");
+    debug_log("Input parameters:");
+    debug_log("- pdf_stream_size: %zu", pdf_stream_size);
+    debug_log("- target_text: %s", target_text ? target_text : "NULL");
+    debug_log("- replacement_text: %s", replacement_text ? replacement_text : "NULL");
+
+    // 参数验证
+    if (pdf_binary_stream == NULL) {
+        set_error(PDF_ERROR_INVALID_PARAMS, "PDF binary stream is NULL");
+        return NULL;
+    }
+    if (pdf_stream_size == 0) {
+        set_error(PDF_ERROR_INVALID_PARAMS, "PDF stream size is 0");
+        return NULL;
+    }
+    if (target_text == NULL) {
+        set_error(PDF_ERROR_INVALID_PARAMS, "Target text is NULL");
+        return NULL;
+    }
+    if (replacement_text == NULL) {
+        set_error(PDF_ERROR_INVALID_PARAMS, "Replacement text is NULL");
+        return NULL;
+    }
+    if (modified_pdf_size == NULL) {
+        set_error(PDF_ERROR_INVALID_PARAMS, "Modified PDF size pointer is NULL");
+        return NULL;
+    }
+
+    // 验证 PDF 格式
+    if (pdf_stream_size < 4 || pdf_binary_stream[0] != '%' || pdf_binary_stream[1] != 'P' || 
+        pdf_binary_stream[2] != 'D' || pdf_binary_stream[3] != 'F') {
+        set_error(PDF_ERROR_INVALID_PARAMS, "Invalid PDF format");
         return NULL;
     }
 
     // 重置错误状态
-    set_error(PDF_SUCCESS, "");
+    set_error(PDF_SUCCESS, NULL);
 
+    debug_log("Initializing PDFium library");
     FPDF_LIBRARY_CONFIG config;
     config.version = 2;
     config.m_pUserFontPaths = NULL;
@@ -135,9 +187,13 @@ unsigned char* replace_text_in_pdf_stream(
     config.m_v8EmbedderSlot = 0;
     FPDF_InitLibraryWithConfig(&config);
 
+    debug_log("Loading PDF document");
     FPDF_DOCUMENT doc = FPDF_LoadMemDocument(pdf_binary_stream, (int)pdf_stream_size, NULL);
     if (!doc) {
-        set_error(PDF_ERROR_LOAD_FAILED, "Failed to load PDF document");
+        unsigned long error = FPDF_GetLastError();
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Failed to load PDF document (PDFium error: %lu)", error);
+        set_error(PDF_ERROR_LOAD_FAILED, error_msg);
         FPDF_DestroyLibrary();
         return NULL;
     }
@@ -164,7 +220,7 @@ unsigned char* replace_text_in_pdf_stream(
     for (int i = 0; i < page_count; i++) {
         FPDF_PAGE page = FPDF_LoadPage(doc, i);
         if (!page) {
-            snprintf(g_last_error.error_message, sizeof(g_last_error.error_message),
+            snprintf(g_last_error_message, sizeof(g_last_error_message),
                     "Failed to load page %d", i);
             continue;
         }
