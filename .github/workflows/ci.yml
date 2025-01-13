@@ -15,6 +15,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: Install dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
@@ -27,8 +29,21 @@ jobs:
       run: |
         brew update
 
+    - name: Verify PDFium library
+      run: |
+        ls -l lib/pdfium/lib/
+        ls -l lib/pdfium/include/
+
     - name: Build Native
-      run: make clean all
+      run: |
+        # Create symbolic link for libpdfium
+        mkdir -p lib
+        if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+          ln -s $(pwd)/lib/pdfium/lib/libpdfium.a lib/libpdfium.a
+        else
+          ln -s $(pwd)/lib/pdfium/lib/libpdfium.a lib/libpdfium.a
+        fi
+        make clean all
 
     - name: Run Tests
       run: |
@@ -40,9 +55,16 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v12
+
+    - name: Verify PDFium WebAssembly library
+      run: |
+        ls -l lib/pdfium/lib/
+        ls -l lib/pdfium/include/
 
     - name: Build WebAssembly
       run: |

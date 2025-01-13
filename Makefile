@@ -1,7 +1,7 @@
 # 定义编译器和编译选项
 CC = gcc
 CFLAGS = -Wall -std=c17 -I./include -I./lib/pdfium/include
-LDFLAGS = -L./lib -lpdfium -Wl,-rpath,@loader_path/../lib
+LDFLAGS = -L./lib -lpdfium -Wl,-rpath,$(LIB_DIR)
 
 # 定义项目目录结构
 SRC_DIR = src
