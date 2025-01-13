@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew update
+
+    - name: Build Native
+      run: make clean all
+
+    - name: Run Tests
+      run: |
+        make test
+        ./bin/pdf_handler tests/test.pdf tests/processed_test.pdf "INSPIRE 3" "INSPIRE 3 DMXY"
+
+  build-wasm:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v12
+
+    - name: Build WebAssembly
+      run: |
+        make -f wasm.mk clean
+        make -f wasm.mk
+
+    - name: Verify WebAssembly Output
+      run: |
+        if [ ! -f "wasm/pdf_handler.js" ] || [ ! -f "wasm/pdf_handler.wasm" ]; then
+          echo "WebAssembly build failed - output files missing"
+          exit 1
+        fi
