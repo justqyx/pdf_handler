@@ -18,12 +18,25 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libpdfium-dev
+        sudo apt-get install -y build-essential
+
+    - name: Download PDFium for Linux
+      run: |
+        mkdir -p temp_download
+        cd temp_download
+        wget https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F5826/pdfium-linux-x64.tgz
+        tar xzf pdfium-linux-x64.tgz
+        sudo mkdir -p /usr/local/include/pdfium
+        sudo cp -r include/* /usr/local/include/pdfium/
+        sudo cp lib/libpdfium.so /usr/local/lib/
+        sudo ldconfig
+        cd ..
+        rm -rf temp_download
 
     - name: Build Native
       run: |
         make clean
-        CFLAGS="-Wall -std=c17 -I/usr/include/pdfium" LDFLAGS="-lpdfium" make all
+        CFLAGS="-Wall -std=c17 -I/usr/local/include" LDFLAGS="-L/usr/local/lib -lpdfium" make all
 
     - name: Run Tests
       run: |
