@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v3
@@ -31,7 +31,7 @@ jobs:
         ./bin/pdf_handler tests/test.pdf tests/processed_test.pdf "INSPIRE 3" "INSPIRE 3 DMXY"
 
   build-wasm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - uses: actions/checkout@v3
