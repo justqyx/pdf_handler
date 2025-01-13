@@ -1,12 +1,17 @@
-# 忽略编译生成的目录
-/obj/
+# 构建输出目录
+/build/
 /bin/
+/wasm/
 
 # 忽略所有的目标文件和库文件
 *.o
 *.a
 *.so
 *.dylib
+*.wasm
+*.js
+!src/*.c
+!src/*.js
 
 # 忽略可执行文件
 pdf_handler
@@ -23,15 +28,15 @@ run_tests
 .AppleDouble
 .LSOverride
 
-# 依赖和构建文件
-/build/
-/lib/
-/deps/
+# Emscripten 工具链
+/emsdk/
 
 # 测试生成的临时文件
 *.tmp
 /tests/*.pdf
+!/tests/test.pdf
 /tests/output/
+/tests/processed_*.pdf
 
 # 调试文件
 *.dSYM/
@@ -41,3 +46,8 @@ run_tests
 
 # 日志文件
 *.log
+
+# 保留预编译的 PDFium 库
+!/lib/pdfium/
+!/lib/pdfium/lib/*.a
+!/lib/pdfium/include/

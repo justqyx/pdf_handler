@@ -14,37 +14,80 @@ A C library for handling PDF files, with a focus on text replacement functionali
   - Shorter replacement text
 - Comprehensive error handling
 - Memory-safe operations
+- Support for both native and WebAssembly builds
 
 ## Dependencies
 
 ### PDFium
-This project requires PDFium, Google's PDF rendering engine. 
+This project uses PDFium, Google's PDF rendering engine. 
 
-#### macOS Installation
+#### For Native Build
+The project includes a precompiled PDFium library in the `lib/pdfium` directory.
+
+#### For WebAssembly Build
+The WebAssembly version of PDFium is also included in the project.
+
+### Emscripten (for WebAssembly build)
+To build the WebAssembly version, you need Emscripten installed:
 ```bash
-brew install pdfium
+brew install emscripten
 ```
-
-The project expects PDFium to be installed in `/usr/local/opt/pdfium/`. If your installation is in a different location, update the paths in the Makefile.
 
 ## Building
 
-1. Make sure you have PDFium installed
-2. Clone this repository
-3. Build the project:
+### Native Build
 ```bash
 make clean all
 ```
 
+### WebAssembly Build
+```bash
+make -f wasm.mk
+```
+
 ## Usage
 
+### Native Version
 ```bash
 ./bin/pdf_handler <input_pdf> <output_pdf> <target_text> <replacement_text>
 ```
 
-### Example
+Example:
 ```bash
 ./bin/pdf_handler input.pdf output.pdf "old text" "new text"
+```
+
+### WebAssembly Version
+The WebAssembly build provides these functions:
+```javascript
+// Replace text in PDF
+Module.ccall('replace_text_in_pdf_stream', 
+            'number',                      // Return type
+            ['array', 'number', 'string', 'string'], // Argument types
+            [pdfData, pdfSize, targetText, replacementText]); // Arguments
+
+// Get last error message
+Module.ccall('get_last_error',
+            'string',  // Return type
+            [],        // No arguments
+            []);      // No arguments
+```
+
+## Project Structure
+
+```
+.
+├── src/              # Source files
+│   ├── main.c       # Main program entry
+│   └── pdf_handler.c # Core PDF handling functionality
+├── include/          # Header files
+│   └── pdf_handler.h # Main header file
+├── tests/           # Test files
+├── lib/             # Libraries
+│   └── pdfium/     # PDFium library files
+├── build/           # Build artifacts
+├── bin/            # Compiled binaries
+└── wasm/           # WebAssembly output
 ```
 
 ## Testing
@@ -54,47 +97,10 @@ Run the test suite with:
 make test
 ```
 
-## Project Structure
-
-```
-.
-├── src/                # Source files
-│   ├── main.c         # Main program entry
-│   └── pdf_handler.c  # Core PDF handling functionality
-├── include/           # Header files
-│   └── pdf_handler.h # Main header file
-├── tests/            # Test files
-├── lib/              # Libraries
-└── obj/              # Object files (generated)
-```
-
 ## Error Handling
 
 The library includes comprehensive error handling. Check the return value and use `get_last_error()` for detailed error information.
 
 ## License
 
-This project is licensed under the GNU General Public License v3 (GPLv3) - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Limitations
-
-- Maximum supported PDF file size: 10MB
-- Text replacement maintains original formatting but may not handle complex layouts
-- Currently only supports text replacement (no image or other content types)
-
-## Author
-
-[Your Name]
-
-## Acknowledgments
-
-- PDFium team for the excellent PDF rendering engine
-- All contributors who have helped with testing and improvements
+This project is licensed under the MIT License - see the LICENSE file for details.
